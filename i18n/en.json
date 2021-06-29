@@ -26,6 +26,7 @@
 	"dt_import_overwriteexisting": "Overwrite existing content",
 	"dt_import_mergeintoexisting": "Overwrite only fields contained in the file",
 	"dt_import_skipexisting": "Skip",
+	"dt_import_prependtoexisting": "Prepend to existing content",
 	"dt_import_appendtoexisting": "Append to existing content",
 	"dt_import_summarydesc": "Summary of import:",
 	"dt_import_editsummary": "{{ucfirst:$1}} import",

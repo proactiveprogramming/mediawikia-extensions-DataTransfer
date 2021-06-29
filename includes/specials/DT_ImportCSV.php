@@ -149,7 +149,7 @@ class DTImportCSV extends SpecialPage {
 		$tempfile = tmpfile();
 		fwrite( $tempfile, $csvString );
 		fseek( $tempfile, 0 );
-		while ( $line = fgetcsv( $tempfile ) ) {
+		while ( $line = fgetcsv( $tempfile, 0, '|' ) ) {
 			array_push( $table, $line );
 		}
 		fclose( $tempfile );

@@ -1,3 +1,4 @@
+
 <?php
 
 /**
@@ -39,7 +40,10 @@ class DTImportJob extends Job {
 		$wgUser = User::newFromId( $this->params['user_id'] );
 		$text = $this->params['text'];
 		if ( $this->title->exists() ) {
-			if ( $for_pages_that_exist == 'append' ) {
+			if ( $for_pages_that_exist == 'prepend' ) {
+				$existingText = ContentHandler::getContentText( $wikiPage->getContent() );
+				$text = $text .  "\n" . $existingText;
+			} elseif ( $for_pages_that_exist == 'append' ) {
 				$existingText = ContentHandler::getContentText( $wikiPage->getContent() );
 				$text = $existingText . "\n" . $text;
 			} elseif ( $for_pages_that_exist == 'merge' ) {

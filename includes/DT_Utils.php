@@ -38,7 +38,7 @@ END;
 			self::printImportRadioButton( 'overwrite', 'dt_import_overwriteexisting', true ) .
 			self::printImportRadioButton( 'merge', 'dt_import_mergeintoexisting' ) .
 			self::printImportRadioButton( 'skip', 'dt_import_skipexisting' ) .
-			self::printImportRadioButton( 'prepend', 'dt_import_prependtoexisting' );
+			self::printImportRadioButton( 'prepend', 'dt_import_prependtoexisting' ) .
 			self::printImportRadioButton( 'append', 'dt_import_appendtoexisting' );
 		$text .= "\t" . Html::rawElement( 'p', null, $existingPagesText ) . "\n";
 		$text .= "\t" . '<hr style="margin: 10px 0 10px 0" />' . "\n";

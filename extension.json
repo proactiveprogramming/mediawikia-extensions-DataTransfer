@@ -1,7 +1,6 @@
 {
-	"@Note": "When updating this file please also update DataTransfer.php with the same changes.",
 	"name": "Data Transfer",
-	"version": "1.2",
+	"version": "1.5",
 	"author": [
 		"Yaron Koren",
 		"..."
@@ -11,7 +10,7 @@
 	"license-name": "GPL-2.0-or-later",
 	"type": "specialpage",
 	"requires": {
-		"MediaWiki": ">= 1.29.0"
+		"MediaWiki": ">= 1.34.0"
 	},
 	"GroupPermissions": {
 		"sysop": {

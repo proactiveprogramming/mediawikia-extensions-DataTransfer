@@ -41,6 +41,11 @@ TODO:
 - Add option to import XML using simple title and content format. Still have not figured out how the XML import works.  (not done)
 - Change wfGetDB to 1.39 class call (See extension:Metadata for example code).
 
+Version 1.5.1 Proactive Programming, 2022-12-12
+- Started from DataTransfer 1.5
+- Changed csv to "|" delimeter.
+- Added prepend option.
+
 Version 1.5, Yaron, 2022-11-16
 
 - Removed support for MW < 1.34; improved support for MW >= 1.36; added Composer loading of PhpSpreadsheet; more use of OOUI in display

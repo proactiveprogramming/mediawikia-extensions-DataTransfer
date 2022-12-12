@@ -1,5 +1,8 @@
-
 <?php
+
+use MediaWiki\MediaWikiServices;
+use MediaWiki\Revision\SlotRoleRegistry;
+use MediaWiki\Revision\SlotRecord;
 
 /**
  * Background job to import a page into the wiki, for use by Data Transfer
@@ -22,7 +25,12 @@ class DTImportJob extends Job {
 			return false;
 		}
 
-		$wikiPage = WikiPage::factory( $this->title );
+		if ( method_exists( MediaWikiServices::class, 'getWikiPageFactory' ) ) {
+			// MW 1.36+
+			$wikiPage = MediaWikiServices::getInstance()->getWikiPageFactory()->newFromTitle( $this->title );
+		} else {
+			$wikiPage = WikiPage::factory( $this->title );
+		}
 		if ( !$wikiPage ) {
 			$this->error = 'dtImport: Wiki page not found "' . $this->title->getPrefixedDBkey() . '"';
 			return false;
@@ -33,19 +41,27 @@ class DTImportJob extends Job {
 			return true;
 		}
 
-		// Change global $wgUser variable to the one specified by
-		// the job only for the extent of this import.
-		global $wgUser;
-		$actual_user = $wgUser;
-		$wgUser = User::newFromId( $this->params['user_id'] );
+		if ( isset( $this->params['slot'] ) ) {
+			$slotRole = $this->params['slot'];
+			$slotRoleRegistry = MediaWikiServices::getInstance()->getSlotRoleRegistry();
+
+			if ( !$slotRoleRegistry->isKnownRole( $slotRole ) ) {
+				$this->error = 'dtImport: Slot role not found "' . $slotRole . '"';
+				return false;
+			}
+		} else {
+			$slotRole = SlotRecord::MAIN;
+		}
+
+		$user = User::newFromId( $this->params['user_id'] );
 		$text = $this->params['text'];
 		if ( $this->title->exists() ) {
-			if ( $for_pages_that_exist == 'prepend' ) {
-				$existingText = ContentHandler::getContentText( $wikiPage->getContent() );
-				$text = $text .  "\n" . $existingText;
-			} elseif ( $for_pages_that_exist == 'append' ) {
+			if ( $for_pages_that_exist == 'append' ) {
 				$existingText = ContentHandler::getContentText( $wikiPage->getContent() );
 				$text = $existingText . "\n" . $text;
+			} elseif ( $for_pages_that_exist == 'prepend' ) {
+				$existingText = ContentHandler::getContentText( $wikiPage->getContent() );
+				$text = $text . "\n". $existingText;
 			} elseif ( $for_pages_that_exist == 'merge' ) {
 				$existingPageStructure = DTPageStructure::newFromTitle( $this->title );
 				$newPageStructure = new DTPageStructure;
@@ -55,19 +71,28 @@ class DTImportJob extends Job {
 			}
 			// otherwise, $for_pages_that_exist == 'overwrite'
 		}
-		$edit_summary = $this->params['edit_summary'];
+		$edit_summary = CommentStoreComment::newUnsavedComment( $this->params['edit_summary'] );
 		$new_content = new WikitextContent( $text );
-		// It's strange that doEditContent() doesn't
+		// It's strange that saveRevision() doesn't
 		// automatically attach the 'bot' flag when the user
 		// is a bot...
-		if ( $wgUser->isAllowed( 'bot' ) ) {
+		if ( $user->isAllowed( 'bot' ) ) {
 			$flags = EDIT_FORCE_BOT;
 		} else {
 			$flags = 0;
 		}
-		$wikiPage->doEditContent( $new_content, $edit_summary, $flags );
 
-		$wgUser = $actual_user;
+		$pageUpdater = $wikiPage->newPageUpdater( $user );
+		$pageUpdater->setContent( $slotRole, $new_content );
+
+		if ( $slotRole !== SlotRecord::MAIN && !$wikiPage->exists() ) {
+			// The 'main' content slot must be set when creating a new page
+			$emptyContent = ContentHandler::makeContent( "", $wikiPage->getTitle() );
+			$pageUpdater->setContent( SlotRecord::MAIN, $emptyContent );
+		}
+
+		$pageUpdater->saveRevision( $edit_summary, $flags );
+
 		return true;
 	}
 }

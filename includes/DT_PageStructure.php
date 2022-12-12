@@ -1,5 +1,7 @@
 <?php
 
+use MediaWiki\MediaWikiServices;
+
 /**
  * Class that holds the structure of a single wiki page. It is used for both
  * turning wikitext into XML, and vice versa.
@@ -20,7 +22,12 @@ class DTPageStructure {
 		$pageStructure = new DTPageStructure();
 		$pageStructure->mPageTitle = $pageTitle;
 
-		$wiki_page = WikiPage::factory( $pageTitle );
+		if ( method_exists( MediaWikiServices::class, 'getWikiPageFactory' ) ) {
+			// MW 1.36+
+			$wiki_page = MediaWikiServices::getInstance()->getWikiPageFactory()->newFromTitle( $pageTitle );
+		} else {
+			$wiki_page = WikiPage::factory( $pageTitle );
+		}
 		$page_contents = ContentHandler::getContentText( $wiki_page->getContent() );
 
 		$pageStructure->parsePageContents( $page_contents );
@@ -182,7 +189,7 @@ class DTPageStructure {
 		$instancesPerTemplate = [];
 		foreach ( $this->mComponents as $pageComponent ) {
 			if ( $pageComponent->isTemplate() ) {
-				$templateName = $pageComponent->mTemplateName;
+				$templateName = $pageComponent->getTemplateName();
 				if ( array_key_exists( $templateName, $instancesPerTemplate ) ) {
 					$instancesPerTemplate[$templateName]++;
 				} else {
@@ -202,7 +209,7 @@ class DTPageStructure {
 
 	private function getIndexOfTemplateName( $templateName ) {
 		foreach ( $this->mComponents as $i => $pageComponent ) {
-			if ( $pageComponent->mTemplateName == $templateName ) {
+			if ( $pageComponent->getTemplateName() == $templateName ) {
 				return $i;
 			}
 		}
@@ -220,8 +227,8 @@ class DTPageStructure {
 		$singleInstanceTemplatesThere = $secondPageStructure->getSingleInstanceTemplates();
 		$singleInstanceTemplatesInBoth = array_intersect( $singleInstanceTemplatesHere, $singleInstanceTemplatesThere );
 		foreach ( $secondPageStructure->mComponents as $pageComponent ) {
-			if ( in_array( $pageComponent->mTemplateName, $singleInstanceTemplatesInBoth ) ) {
-				$indexOfThisTemplate = $this->getIndexOfTemplateName( $pageComponent->mTemplateName );
+			if ( in_array( $pageComponent->getTemplateName(), $singleInstanceTemplatesInBoth ) ) {
+				$indexOfThisTemplate = $this->getIndexOfTemplateName( $pageComponent->getTemplateName() );
 				foreach ( $pageComponent->getFields() as $fieldName => $fieldValue ) {
 					$this->mComponents[$indexOfThisTemplate]->addNamedField( $fieldName, $fieldValue );
 				}

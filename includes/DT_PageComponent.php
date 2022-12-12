@@ -52,6 +52,10 @@ class DTPageComponent {
 		return $this->mIsTemplate;
 	}
 
+	public function getTemplateName() {
+		return $this->mTemplateName;
+	}
+
 	public function toWikitext() {
 		if ( $this->mIsTemplate ) {
 			$wikitext = '{{' . $this->mTemplateName;
@@ -84,13 +88,7 @@ class DTPageComponent {
 		$parser = MediaWikiServices::getInstance()->getParser();
 
 		if ( $this->mIsTemplate ) {
-			if ( method_exists( 'MediaWiki\MediaWikiServices', 'getContentLanguage' ) ) {
-				// MW 1.32+
-				$contLang = MediaWikiServices::getInstance()->getContentLanguage();
-			} else {
-				global $wgContLang;
-				$contLang = $wgContLang;
-			}
+			$contLang = MediaWikiServices::getInstance()->getContentLanguage();
 			$namespace_labels = $contLang->getNamespaces();
 			$template_label = $namespace_labels[NS_TEMPLATE];
 			$field_str = str_replace( ' ', '_', wfMessage( 'dt_xml_field' )->inContentLanguage()->text() );
@@ -143,12 +141,7 @@ class DTPageComponent {
 				// Undo the escaping that happened before.
 				$freeText = str_replace( [ '&#123;', '&#125;' ], [ '{', '}' ], $freeText );
 				// Get rid of table of contents.
-				if ( method_exists( '\MediaWiki\MediaWikiServices', 'getInstance' ) ) {
-					// MW 1.32+
-					$mw = \MediaWiki\MediaWikiServices::getInstance()->getMagicWordFactory()->get( 'toc' );
-				} else {
-					$mw = MagicWord::get( 'toc' );
-				}
+				$mw = MediaWikiServices::getInstance()->getMagicWordFactory()->get( 'toc' );
 				if ( $mw->match( $freeText ) ) {
 					$freeText = $mw->replace( '', $freeText );
 				}
@@ -157,7 +150,7 @@ class DTPageComponent {
 			} else {
 				$freeText = $this->mFreeText;
 			}
-			return XML::element( $free_text_str, [ 'id' => $this->mFreeTextID ], $freeText );
+			return Xml::element( $free_text_str, [ 'id' => $this->mFreeTextID ], $freeText );
 		}
 	}
 }

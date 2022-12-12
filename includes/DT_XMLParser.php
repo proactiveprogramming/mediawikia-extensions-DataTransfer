@@ -45,6 +45,7 @@ class DTXMLParser {
 			}
 			$offset += strlen( $chunk );
 		} while ( $chunk !== false && !$this->mSource->atEnd() );
+
 		xml_parser_free( $parser );
 	}
 
@@ -64,14 +65,19 @@ class DTXMLParser {
 	function in_pages( $parser, $name, $attribs ) {
 		$this->debug( "in_pages $name" );
 		$page_str = str_replace( ' ', '_', wfMessage( 'dt_xml_page' )->inContentLanguage()->text() );
+		$slot_str = str_replace( ' ', '_', wfMessage( 'dt_xml_slot' )->inContentLanguage()->text() );
 		if ( $name == $page_str ) {
 			$title_str = str_replace( ' ', '_', wfMessage( 'dt_xml_title' )->inContentLanguage()->text() );
 			if ( array_key_exists( $title_str, $attribs ) ) {
 				$this->mCurPage = new DTWikiPage( $attribs[$title_str] );
-			xml_set_element_handler( $parser, "in_page", "out_page" );
+				xml_set_element_handler( $parser, "in_page", "out_page" );
 			} else {
 				$this->throwXMLerror( "'$title_str' attribute missing for page" );
 				return;
+			}
+
+			if ( array_key_exists( $slot_str, $attribs ) ) {
+				$this->mCurPage->setSlot( $attribs[$slot_str] );
 			}
 		} else {
 			$this->throwXMLerror( "Expected <$page_str>, got <$name>" );
@@ -91,7 +97,7 @@ class DTXMLParser {
 		if ( $name == $page_str ) {
 			if ( array_key_exists( $title_str, $attribs ) ) {
 				$this->mCurPage = new DTWikiPage( $attribs[$title_str] );
-			xml_set_element_handler( $parser, "in_page", "out_page" );
+				xml_set_element_handler( $parser, "in_page", "out_page" );
 			} else {
 				$this->throwXMLerror( "'$title_str' attribute missing for page" );
 				return;
@@ -119,7 +125,7 @@ class DTXMLParser {
 		if ( $name == $template_str ) {
 			if ( array_key_exists( $name_str, $attribs ) ) {
 				$this->mCurTemplate = new DTWikiTemplate( $attribs[$name_str] );
-			xml_set_element_handler( $parser, "in_template", "out_template" );
+				xml_set_element_handler( $parser, "in_template", "out_template" );
 			} else {
 				$this->throwXMLerror( "'$name_str' attribute missing for template" );
 				return;
@@ -151,13 +157,8 @@ class DTXMLParser {
 			$name_str = str_replace( ' ', '_', wfMessage( 'dt_xml_name' )->inContentLanguage()->text() );
 			if ( array_key_exists( $name_str, $attribs ) ) {
 				$this->mCurFieldName = $attribs[$name_str];
-			// $this->push( $name );
-			$this->workRevisionCount = 0;
-			$this->workSuccessCount = 0;
-			$this->uploadCount = 0;
-			$this->uploadSuccessCount = 0;
-			xml_set_element_handler( $parser, "in_field", "out_field" );
-			xml_set_character_data_handler( $parser, "field_value" );
+				xml_set_element_handler( $parser, "in_field", "out_field" );
+				xml_set_character_data_handler( $parser, "field_value" );
 			} else {
 				$this->throwXMLerror( "'$name_str' attribute missing for field" );
 				return;
@@ -210,5 +211,9 @@ class DTXMLParser {
 
 	function freetext_value( $parser, $data ) {
 		$this->mCurPage->addFreeText( $data );
+	}
+
+	public function getPages() {
+		return $this->mPages;
 	}
 }

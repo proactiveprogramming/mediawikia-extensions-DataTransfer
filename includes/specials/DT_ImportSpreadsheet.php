@@ -17,6 +17,8 @@ class DTImportSpreadsheet extends DTImportCSV {
 			return '<div class="error">You must have the PhpSpreadsheet or PHPExcel library installed to run this page.</div>';
 		}
 
+		$this->getOutput()->enableOOUI();
+
 		$formText = DTUtils::printFileSelector( $this->getFiletype() );
 		$formText .= DTUtils::printExistingPagesHandling();
 		$formText .= DTUtils::printImportSummaryInput( $this->getFiletype() );
@@ -30,13 +32,21 @@ class DTImportSpreadsheet extends DTImportCSV {
 		return $text;
 	}
 
-	protected function importFromFile( $file, $encoding, &$pages ) {
-		if ( $file === null ) {
-			return wfMessage( 'emptyfile' )->text();
+	/**
+	 * @inheritDoc
+	 */
+	protected function importFromFile( ImportStreamSource $excelFile, $encoding, &$pages ) {
+		$excelFileString = '';
+		while ( !$excelFile->atEnd() ) {
+			$excelFileString .= $excelFile->readChunk();
 		}
 
-		$metadata = stream_get_meta_data( $file );
-		$filename = $metadata['uri'];
+		if ( $excelFileString == '' ) {
+			return $this->msg( 'emptyfile' )->text();
+		}
+
+		$filename = wfTempDir() . '/' . time() . '.xslx';
+		file_put_contents( $filename, $excelFileString );
 
 		if ( class_exists( 'PhpOffice\PhpSpreadsheet\Spreadsheet' ) ) {
 			$spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load( $filename );

@@ -59,21 +59,16 @@ class DTViewXML extends SpecialPage {
 					],
 					$fname
 				);
-				if ( $res ) {
-					while ( $row = $db->fetchRow( $res ) ) {
-						if ( array_key_exists( 'page_title', $row ) ) {
-							$page_namespace = $row['page_namespace'];
-							if ( $page_namespace == NS_CATEGORY ) {
-								$new_category = $row[ 'page_title' ];
-								if ( !in_array( $new_category, $categories ) ) {
-									$newcategories[] = $new_category;
-								}
-							} else {
-								$titles[] = Title::newFromID( $row['page_id'] );
-							}
+				foreach ( $res as $row ) {
+					$page_namespace = $row->page_namespace;
+					if ( $page_namespace == NS_CATEGORY ) {
+						$new_category = $row->page_title;
+						if ( !in_array( $new_category, $categories ) ) {
+							$newcategories[] = $new_category;
 						}
+					} else {
+						$titles[] = Title::newFromID( $row->page_id );
 					}
-					$db->freeResult( $res );
 				}
 			}
 			if ( count( $newcategories ) == 0 ) {
@@ -119,20 +114,14 @@ class DTViewXML extends SpecialPage {
 	}
 
 	function getXMLForPage( $title, $simplified_format, $depth = 0 ) {
-		if ( method_exists( 'MediaWiki\Permissions\PermissionManager', 'userCan' ) ) {
-			// MW 1.33+
-			$user = $this->getUser();
-			$permissionManager = MediaWikiServices::getInstance()->getPermissionManager();
-			if ( !$permissionManager->userCan( 'read', $user, $title ) ) {
-				return "";
-			}
-		} else {
-			if ( !$title->userCan( 'read' ) ) {
-				return "";
-			}
+		$user = $this->getUser();
+		$permissionManager = MediaWikiServices::getInstance()->getPermissionManager();
+		if ( !$permissionManager->userCan( 'read', $user, $title ) ) {
+			return "";
 		}
 
-		if ( $depth > 5 ) { return "";
+		if ( $depth > 5 ) {
+			return "";
 		}
 
 		$pageStructure = DTPageStructure::newFromTitle( $title );
@@ -147,13 +136,10 @@ class DTViewXML extends SpecialPage {
 	function doSpecialViewXML() {
 		$out = $this->getOutput();
 		$request  = $this->getRequest();
-		if ( method_exists( 'MediaWiki\MediaWikiServices', 'getContentLanguage' ) ) {
-			// MW 1.32+
-			$contLang = MediaWikiServices::getInstance()->getContentLanguage();
-		} else {
-			global $wgContLang;
-			$contLang = $wgContLang;
-		}
+		$out->enableOOUI();
+
+		$contLang = MediaWikiServices::getInstance()->getContentLanguage();
+		$namespaceInfo = MediaWikiServices::getInstance()->getNamespaceInfo();
 
 		$namespace_labels = $contLang->getNamespaces();
 		$category_label = $namespace_labels[NS_CATEGORY];
@@ -218,7 +204,7 @@ class DTViewXML extends SpecialPage {
 					if ( $ns == 0 ) {
 						$ns_name = "Main";
 					} else {
-						$ns_name = MWNamespace::getCanonicalName( $ns );
+						$ns_name = $namespaceInfo->getCanonicalName( $ns );
 					}
 					if ( $simplified_format ) {
 						$text .= '<' . str_replace( ' ', '_', $ns_name ) . ">\n";
@@ -285,7 +271,7 @@ END;
 				$text .= ' ' . str_replace( '_', ' ', $nsName ) . "<br />\n";
 			}
 			$text .= "<br /><p><label><input type=\"checkbox\" name=\"simplified_format\" /> " . $this->msg( 'dt_viewxml_simplifiedformat' )->text() . "</label></p>\n";
-			$text .= "<input type=\"submit\" value=\"" . $this->msg( 'viewxml' )->text() . "\">\n";
+			$text .= DTUtils::printSubmitButton( 'viewxml' );
 			$text .= "</form>\n";
 
 			$out->addHTML( $text );

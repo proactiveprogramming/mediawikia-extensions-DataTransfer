@@ -1,4 +1,7 @@
 <?php
+
+use MediaWiki\MediaWikiServices;
+
 /**
  * Lets the user import an XML file to turn into wiki pages
  *
@@ -20,6 +23,8 @@ class DTImportXML extends SpecialPage {
 
 	function execute( $query ) {
 		$this->setHeaders();
+		$out = $this->getOutput();
+		$out->enableOOUI();
 
 		if ( !$this->getUser()->isAllowed( 'datatransferimport' ) ) {
 			throw new PermissionsError( 'datatransferimport' );
@@ -46,7 +51,7 @@ class DTImportXML extends SpecialPage {
 				], $formText ) . "\n";
 		}
 
-		$this->getOutput()->addHTML( $text );
+		$out->addHTML( $text );
 	}
 
 	function modifyPages( $source, $editSummary, $forPagesThatExist ) {
@@ -63,12 +68,18 @@ class DTImportXML extends SpecialPage {
 		$job_params['edit_summary'] = $editSummary;
 		$job_params['for_pages_that_exist'] = $forPagesThatExist;
 
-		foreach ( $xml_parser->mPages as $page ) {
+		foreach ( $xml_parser->getPages() as $page ) {
 			$title = Title::newFromText( $page->getName() );
 			$job_params['text'] = $page->createText();
+			$job_params['slot'] = $page->getSlot();
 			$jobs[] = new DTImportJob( $title, $job_params );
 		}
-		JobQueueGroup::singleton()->push( $jobs );
+		if ( method_exists( MediaWikiServices::class, 'getJobQueueGroup' ) ) {
+			// MW 1.37+
+			MediaWikiServices::getInstance()->getJobQueueGroup()->push( $jobs );
+		} else {
+			JobQueueGroup::singleton()->push( $jobs );
+		}
 
 		$text .= $this->msg( 'dt_import_success' )->numParams( count( $jobs ) )->params( 'XML' )
 			->parseAsBlock();

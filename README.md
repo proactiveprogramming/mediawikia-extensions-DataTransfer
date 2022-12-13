@@ -18,6 +18,44 @@ https://www.mediawiki.org/wiki/Extension:Data_Transfer
 
 Notes on installing Data Transfer can be found in the file INSTALL. 
 
+## Example files
+The following are properly formatted example files.  The names are 
+case sensative.
+
+### CSV Import file
+<pre>
+Title,Cheese[Country],Cheese[Texture],Free Text
+Mozarella,Italy,Semi-soft,It's good on pizzas!
+Cheddar,England,Hard/semi-hard,"Often sharp, but not always."
+Gorgonzola,Italy,"buttery or firm, crumbly","salty, with a ""bite"" from its blue veining"
+Stilton,,"",needs more data
+</pre>
+
+### xlsx Spreadsheet Import file.
+It has the same column formats as the CSV file, except the file is saved as a xlsx file instead of a csv file.
+
+### XML Import file without slots
+<pre>
+<Pages>
+<Page Title="Limburger">
+  <Free_Text>
+<p><b>Limburger</b> is a cheese that originated in the Herve area of the historical Duchy of Limburg.</p>
+  </Free_Text>
+</Page>
+</Pages>
+</pre>
+
+### XML Import file with slots
+<pre>
+<Pages>
+<Page Title="Limburger" Slot="text-notes">
+  <Free_Text>
+<p><b>Limburger</b> is a cheese that originated in the Herve area of the historical Duchy of Limburg.</p>
+  </Free_Text>
+</Page>
+</Pages>
+</pre>
+
 ## Credits 
 
 Data Transfer was mostly written by Yaron Koren. The spreadsheet import
@@ -41,8 +79,11 @@ TODO:
 - Add configuration for csv delimter (not done)
 - Add section number option (not done)
 - Add subpage option (not done)
-- Change wfGetDB to 1.39 class call (See extension:Metadata for example code).
-- Add option to target section by section header.  (Note: Requires SectionHeader extension to be completed first).
+- Change wfGetDB to 1.39 class call (See extension:Metadata for example code). (not done)
+- Add option to target section by section header.  (Note: Requires SectionHeader extension to be completed first). (not done)
+- Allow column names to be case insensative. (not done)
+- Allow XML tags to be case insensative. (not done)
+- If Free_Text is indented in the XML file, the file should still process the records correctly. (not done)
 
 ### Version 1.5.1 
   MediaWiki Version: 1.39.x LTS

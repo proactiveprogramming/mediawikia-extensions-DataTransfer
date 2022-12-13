@@ -16,7 +16,7 @@ For more information on Data Transfer, see the extension
 homepage at
 https://www.mediawiki.org/wiki/Extension:Data_Transfer
 
-Notes on installing Data Transfer can be found in the file INSTALL.
+Notes on installing Data Transfer can be found in the file INSTALL. 
 
 ## Credits 
 
